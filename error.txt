@@ -1,0 +1,5 @@
+#define SOC_CREATE   -1
+#define BIND_ERR   	 -2
+#define LISTEN_ERR   -3
+#define HOSTNAME_GET    -4
+#define CON_ERR  -5
