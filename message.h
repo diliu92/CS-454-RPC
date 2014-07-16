@@ -19,6 +19,12 @@ using namespace std;
 #define EXECUTE_FAILURE  	9
 #define TERMINATE  	 	 	10
 
+#define MAX_DATA_LEN 	1024
+#define HOST_LEN 		15
+#define FN_NAME_LEN 	64
+#define INT_SIZE 		4
+#define PTR_SIZE 		sizeof(void *)
+
 struct message {
 	int length;		// message length
 	int type;		// type

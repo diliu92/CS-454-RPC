@@ -3,3 +3,5 @@
 #define LISTEN_ERR   -3
 #define HOSTNAME_GET    -4
 #define CON_ERR  -5
+#define ACPT_ERR  -6
+#define TERM_ERR -7

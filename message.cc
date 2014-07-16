@@ -4,12 +4,6 @@
 #include <iostream>
 #include <sstream>
 
-#define HOST_LEN 15
-#define FN_NAME_LEN 64
-#define INT_SIZE 4
-#define VOID_PTR_SIZE 8
-#define MAX_DATA_LEN 1024
-
 using namespace std;
 
 struct message createReg(char *host, int port, char *name, int *argTypes)
@@ -114,11 +108,11 @@ struct message createExec(char* name, int* argTypes, void** args)
 
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*VOID_PTR_SIZE), 
-			   *(args+j), VOID_PTR_SIZE);
+		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE), 
+			   *(args+j), PTR_SIZE);
 	}
 
-	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*VOID_PTR_SIZE;
+	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*PTR_SIZE;
 	msg.type = EXECUTE;
 	memcpy(msg.data, msg_data, msg.length);
 	return msg;
@@ -141,11 +135,11 @@ struct message createExecSuc(char* name, int* argTypes, void** args)
 
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*VOID_PTR_SIZE), 
-			   *(args+j), VOID_PTR_SIZE);
+		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE), 
+			   *(args+j), PTR_SIZE);
 	}
 
-	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*VOID_PTR_SIZE;
+	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*PTR_SIZE;
 	msg.type = EXECUTE_SUCCESS;
 	memcpy(msg.data, msg_data, msg.length);
 	return msg;

@@ -83,4 +83,9 @@ int main(){
 	// cout << "msg4 exec suc:" << endl;
 	// cout << "msg4 exec fail:" << endl;
 	// cout << "msg4 terminate:" << endl;
+	// char a[0];
+	// a[0] = '\0';
+	// cout << a << endl;
+	float a;
+	cout << sizeof(a)<< endl;
 }
