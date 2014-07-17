@@ -18,11 +18,12 @@ using namespace std;
 #define EXECUTE_SUCCESS  	8
 #define EXECUTE_FAILURE  	9
 #define TERMINATE  	 	 	10
+#define INITIALIZE 	 		11
 
 #define MAX_DATA_LEN 	1024
 #define HOST_LEN 		15
 #define FN_NAME_LEN 	64
-#define INT_SIZE 		4
+#define INT_SIZE 		sizeof(int)
 #define PTR_SIZE 		sizeof(void *)
 
 struct message {

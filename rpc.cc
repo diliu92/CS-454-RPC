@@ -37,7 +37,7 @@ struct svr_fns {
 	skeleton function;	
 };
 
-int acpt_soc, reg_soc, n =0;
+int acpt_soc, reg_soc, n=0;
 struct svr_fns svfns[32];			
 
 void *exec_fn(void *conn){
@@ -170,6 +170,7 @@ void *exec_fn(void *conn){
 				}
 				k++;
 			}
+			free(args);
 			if (k == 32)
 			{
 				struct message msg1 = createExecFail(NO_FUNCTION);
@@ -224,7 +225,6 @@ int rpcInit()
 	// fcntl(reg_soc, F_SETFL, O_NONBLOCK);	
 	// fcntl(acpt_soc, F_SETFL, O_NONBLOCK);
 
-	// Open connection to binder
 	char *mach_name = getenv("BINDER_ADDRESS");
 	int port_num = atoi(getenv("BINDER_PORT"));
 
@@ -256,6 +256,12 @@ int rpcInit()
 		cout << "Unable to connect to binder" << endl;
 		return CON_ERR;
 	}
+	int length = 0;
+	int type = INITIALIZE;
+	char data[] = "";
+	send(reg_soc, &length, INT_SIZE, 0);
+	send(reg_soc, &type, INT_SIZE, 0);
+	send(reg_soc, data, 0, 0);
 	return 0;
 }
 
