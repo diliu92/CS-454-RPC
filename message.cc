@@ -108,7 +108,7 @@ struct message createExec(char* name, int* argTypes, void** args)
 
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE), 
+		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE),
 			   *(args+j), PTR_SIZE);
 	}
 
@@ -135,7 +135,7 @@ struct message createExecSuc(char* name, int* argTypes, void** args)
 
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE), 
+		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE),
 			   *(args+j), PTR_SIZE);
 	}
 
@@ -159,7 +159,6 @@ struct message createTerm()
 	struct message msg;
 	msg.length = 0;
 	msg.type = TERMINATE;
-	msg.data[0] = '\0';	
 	return msg;
 }
 

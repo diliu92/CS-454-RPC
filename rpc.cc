@@ -32,19 +32,19 @@ using namespace std;
 #define NO_FUNCTION		-8
 
 struct svr_fns {
-	char *name;		
-	int *argTypes;		
-	skeleton function;	
+	char *name;
+	int *argTypes;
+	skeleton function;
 };
 
 int acpt_soc, reg_soc, n=0;
-struct svr_fns svfns[32];	
-bool connected = false;		
+struct svr_fns svfns[32];
+bool connected = false;
 
 void *exec_fn(void *conn){
 	int soc_fd = *((int *)conn);
 	struct message msg;
-	int rcv_len, rcv_type;	
+	int rcv_len, rcv_type;
 	while (true)
 	{
 		recv(soc_fd, &rcv_len, INT_SIZE, 0);
@@ -60,11 +60,11 @@ void *exec_fn(void *conn){
 		while (*((int *)(rcv_data+i))!=0)
 		{
 			memcpy(argTypes+i, rcv_data+cur_len, INT_SIZE);
-			cur_len += INT_SIZE; 
+			cur_len += INT_SIZE;
 			i++;
 		}
 		memcpy(argTypes+i, rcv_data+cur_len, INT_SIZE);
-		cur_len += INT_SIZE; 
+		cur_len += INT_SIZE;
 		i++;
 		void **args = (void **)malloc(i * PTR_SIZE);
 
@@ -79,72 +79,72 @@ void *exec_fn(void *conn){
 					if (arr_size == 0) {
 						char c;
 						memcpy(&c, rcv_data+cur_len, CHAR_SIZE);
-						cur_len += CHAR_SIZE; 
+						cur_len += CHAR_SIZE;
 						*(args+j) = &c;
 					} else {
 						char *c;
 						memcpy(c, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = c;
 					} break;
 				case ARG_SHORT:
 					if (arr_size == 0) {
 						short s;
 						memcpy(&s, rcv_data+cur_len, SHORT_SIZE);
-						cur_len += SHORT_SIZE; 
+						cur_len += SHORT_SIZE;
 						*(args+j) = &s;
 					} else {
 						short *s;
 						memcpy(s, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = s;
 					} break;
 				case ARG_INT:
 					if (arr_size == 0) {
 						int i2;
 						memcpy(&i2, rcv_data+cur_len, INT_SIZE);
-						cur_len += INT_SIZE; 
+						cur_len += INT_SIZE;
 						*(args+j) = &i2;
 					} else {
 						int *i2;
 						memcpy(i2, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = i2;
 					} break;
 				case ARG_LONG:
 					if (arr_size == 0) {
 						long l;
 						memcpy(&l, rcv_data+cur_len, LONG_SIZE);
-						cur_len += SHORT_SIZE; 
+						cur_len += SHORT_SIZE;
 						*(args+j) = &l;
 					} else {
 						long *l;
 						memcpy(l, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = l;
 					} break;
 				case ARG_DOUBLE:
 					if (arr_size == 0) {
 						double d;
 						memcpy(&d, rcv_data+cur_len, DOUBLE_SIZE);
-						cur_len += DOUBLE_SIZE; 
+						cur_len += DOUBLE_SIZE;
 						*(args+j) = &d;
 					} else {
 						double *d;
 						memcpy(d, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = d;
 					} break;
-				case ARG_FLOAT:		
+				case ARG_FLOAT:
 					if (arr_size == 0) {
 						float f;
 						memcpy(&f, rcv_data+cur_len, FLOAT_SIZE);
-						cur_len += FLOAT_SIZE; 
+						cur_len += FLOAT_SIZE;
 						*(args+j) = &f;
 					} else {
 						float *f;
 						memcpy(f, rcv_data+cur_len, PTR_SIZE);
-						cur_len += PTR_SIZE; 
+						cur_len += PTR_SIZE;
 						*(args+j) = f;
 					} break;
 			}
@@ -160,7 +160,7 @@ void *exec_fn(void *conn){
 						if (*(argTypes+l) != *(sf.argTypes+l)) {
 							break;
 						} else {
-							l++;							
+							l++;
 						}
 					}
 					if (*(argTypes+l)==0 && *(sf.argTypes+l) ==0)
@@ -199,7 +199,7 @@ void *exec_fn(void *conn){
 				send(soc_fd, &send_len3, INT_SIZE, 0);
 				send(soc_fd, &send_type3, INT_SIZE, 0);
 				send(soc_fd, msg3.data, send_len3, 0);
-			}	
+			}
 		}
 	}
 	pthread_exit(NULL);
@@ -207,7 +207,7 @@ void *exec_fn(void *conn){
 
   /* create sockets and connect to the binder */
 int rpcInit()
-{	
+{
 	struct sockaddr_in server_addr, binder_addr;
 	struct hostent *binder;
 	socklen_t addr_len = sizeof(sockaddr_in);
@@ -223,7 +223,7 @@ int rpcInit()
 	}
 
 	// // Change to non-block so socket will not be blocked by recv
-	// fcntl(reg_soc, F_SETFL, O_NONBLOCK);	
+	// fcntl(reg_soc, F_SETFL, O_NONBLOCK);
 	// fcntl(acpt_soc, F_SETFL, O_NONBLOCK);
 
 	char *mach_name = getenv("BINDER_ADDRESS");
@@ -237,7 +237,7 @@ int rpcInit()
 	binder_addr.sin_family = AF_INET;
 	binder_addr.sin_port = htons(port_num);
 	memcpy((char *)&binder_addr.sin_addr.s_addr, (char *)binder->h_addr, binder->h_length);
-	
+
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(0);
 	server_addr.sin_addr.s_addr = INADDR_ANY;
@@ -259,7 +259,7 @@ int rpcInit()
 	}
 	int length = 0;
 	int type = INITIALIZE;
-	char data[] = "";
+	char *data = NULL;
 	send(reg_soc, &length, INT_SIZE, 0);
 	send(reg_soc, &type, INT_SIZE, 0);
 	send(reg_soc, data, 0, 0);
@@ -267,9 +267,9 @@ int rpcInit()
 	return 0;
 }
 
-// Register server functions 
+// Register server functions
 int rpcRegister(char* name, int* argTypes, skeleton f)
-{	
+{
 	struct sockaddr_in server_addr;
 	memset(&server_addr, '0', sizeof(server_addr));
 	socklen_t addr_len = sizeof(sockaddr_in);
@@ -296,7 +296,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 		recv(reg_soc, &rcv_len, INT_SIZE, 0);
 		recv(reg_soc, &rcv_type, INT_SIZE, 0);
 		recv(reg_soc, &return_code, INT_SIZE, 0);
-		return return_code;		
+		return return_code;
 	}
 	else
 	{
@@ -306,7 +306,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 }
 
 int rpcCall(char* name, int* argTypes, void** args)
-{	
+{
 	struct sockaddr_in server_addr, binder_addr;
 	struct hostent *binder, *server;
 	socklen_t addr_len = sizeof(sockaddr_in);
@@ -331,13 +331,13 @@ int rpcCall(char* name, int* argTypes, void** args)
 	binder_addr.sin_family = AF_INET;
 	binder_addr.sin_port = htons(binder_port);
 	memcpy((char *)&binder_addr.sin_addr.s_addr, (char *)binder->h_addr, binder->h_length);
-	
+
 	if (connect(conn_soc, (sockaddr *)&binder_addr, addr_len) == -1)
 	{
 		cout << "Unable to connect to binder" << endl;
 		return CON_ERR;
 	}
-	
+
 	struct message msg = createLocReq(name, argTypes);
 	int send_len = msg.length;
 	int send_type = msg.type;
@@ -367,7 +367,7 @@ int rpcCall(char* name, int* argTypes, void** args)
 		server_addr.sin_family = AF_INET;
 		server_addr.sin_port = htons(server_port);
 		memcpy((char *)&server_addr.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
-		
+
 		if (connect(conn_soc, (sockaddr *)&server_addr, addr_len) == -1)
 		{
 			cout << "Unable to connect to server" << endl;
@@ -459,7 +459,7 @@ int rpcTerminate()
 	binder_addr.sin_family = AF_INET;
 	binder_addr.sin_port = htons(binder_port);
 	memcpy((char *)&binder_addr.sin_addr.s_addr, (char *)binder->h_addr, binder->h_length);
-	
+
 	if (connect(conn_soc, (sockaddr *)&binder_addr, addr_len) == -1)
 	{
 		cout << "Unable to connect to binder" << endl;
