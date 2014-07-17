@@ -231,7 +231,6 @@ int main()
 		return -1;
 	}
 
-
 	while(true){
 		new_socket_fd = accept(binder_socket_fd, (struct sockaddr *) &client_addr, &client_addr_len);
 		if (new_socket_fd < 0){
