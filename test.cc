@@ -1,10 +1,22 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <iostream>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/fcntl.h>
+#include "rpc.h"
 #include "message.h"
 
 using namespace std;
 
-int main(){
+// int main(){
 	// int a[] = {1,2,3,4,5,6,7,8,9,0};
 	// int argTypes[] = {1,2,3,4,5,6,7,8,9,0};
 	// char *host = "127.0.0.1";
@@ -83,4 +95,7 @@ int main(){
 	// cout << "msg4 exec suc:" << endl;
 	// cout << "msg4 exec fail:" << endl;
 	// cout << "msg4 terminate:" << endl;
+int main(int argc, char *argv[]) {
+	rpcInit();	
+	rpcTerminate();
 }
