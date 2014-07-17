@@ -38,7 +38,8 @@ struct svr_fns {
 };
 
 int acpt_soc, reg_soc, n=0;
-struct svr_fns svfns[32];			
+struct svr_fns svfns[32];	
+bool connected = false;		
 
 void *exec_fn(void *conn){
 	int soc_fd = *((int *)conn);
@@ -262,6 +263,7 @@ int rpcInit()
 	send(reg_soc, &length, INT_SIZE, 0);
 	send(reg_soc, &type, INT_SIZE, 0);
 	send(reg_soc, data, 0, 0);
+	connected = true;
 	return 0;
 }
 
@@ -285,14 +287,22 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	svfns[n].function = f;
 	n++;
 
-	send(reg_soc, &send_len, INT_SIZE, 0);
-	send(reg_soc, &send_type, INT_SIZE, 0);
-	send(reg_soc, msg.data, send_len, 0);
-	int rcv_len, rcv_type, return_code;
-	recv(reg_soc, &rcv_len, INT_SIZE, 0);
-	recv(reg_soc, &rcv_type, INT_SIZE, 0);
-	recv(reg_soc, &return_code, INT_SIZE, 0);
-	return return_code;
+	if (connected)
+	{
+		send(reg_soc, &send_len, INT_SIZE, 0);
+		send(reg_soc, &send_type, INT_SIZE, 0);
+		send(reg_soc, msg.data, send_len, 0);
+		int rcv_len, rcv_type, return_code;
+		recv(reg_soc, &rcv_len, INT_SIZE, 0);
+		recv(reg_soc, &rcv_type, INT_SIZE, 0);
+		recv(reg_soc, &return_code, INT_SIZE, 0);
+		return return_code;		
+	}
+	else
+	{
+		cout << "Unable to connected to binder" << endl;
+		return CON_ERR;
+	}
 }
 
 int rpcCall(char* name, int* argTypes, void** args)
