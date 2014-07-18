@@ -21,7 +21,7 @@ using namespace std;
 #define INITIALIZE 	 		11
 
 #define MAX_DATA_LEN 	1024
-#define HOST_LEN 		64
+#define HOST_LEN 		15
 #define FN_NAME_LEN 	64
 #define INT_SIZE 		sizeof(int)
 #define PTR_SIZE 		sizeof(void *)
@@ -34,7 +34,7 @@ using namespace std;
 struct message {
 	int length;		// message length
 	int type;		// type
-	char data[MAX_DATA_LEN];	// Char array with length length
+	char data[1024];	// Char array with length length
 	// string msg;
 };
 
