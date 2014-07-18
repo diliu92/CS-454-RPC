@@ -68,10 +68,10 @@ void *exec_fn(void *conn){
 		int offset = FN_NAME_LEN;
 		int i = 0;
 		while (*((int *)(rcv_data + offset)) != 0){
-			offset = offset + 4;
+			offset = offset + INT_SIZE;
 			i++;
 		}
-		offset = offset + 4;
+		offset = offset + INT_SIZE;
 
 		char **args;
 
@@ -187,8 +187,8 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	memset(&server_addr, '0', sizeof(server_addr));
 	socklen_t addr_len = sizeof(sockaddr_in);
 
-	char host[15];
-	gethostname(host,15);
+	char host[HOST_LEN];
+	gethostname(host,HOST_LEN);
 	getsockname(acpt_soc, (sockaddr *)&server_addr, &addr_len);
 	int port = ntohs(server_addr.sin_port);
 
@@ -197,7 +197,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	int send_type = msg.type;
 
 	functionInfo fnInfo;
-	memcpy(fnInfo.fnName, name, 64);
+	memcpy(fnInfo.fnName, name, FN_NAME_LEN);
 	int i =0;
 	while (*(argTypes+i)!=0){i++;}
 	fnInfo.argTypes = new int[i+1];
@@ -342,10 +342,10 @@ int rpcCall(char* name, int* argTypes, void** args)
 			int offset = FN_NAME_LEN;
 			int i = 0;
 			while (*((int *)(rcv_data2 + offset)) != 0){
-				offset = offset + 4;
+				offset = offset + INT_SIZE;
 				i++;
 			}
-			offset = offset + 4;
+			offset = offset + INT_SIZE;
 
 			for (int x = 0; x < i; x++){
 				int argType = argTypes[x];
@@ -404,7 +404,7 @@ int rpcTerminate()
 	if ((conn_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 )
 	{
 		cerr << "Unable to create socket" << endl;
-		return -1;
+		return SOC_CREATE;
 	}
 
 	char *mach_name = getenv("BINDER_ADDRESS");
