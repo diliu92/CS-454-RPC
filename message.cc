@@ -1,8 +1,10 @@
-#include "message.h"
 #include <string.h>
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "message.h"
+#include "helper.h"
+#include "rpc.h"
 
 using namespace std;
 
@@ -104,17 +106,21 @@ struct message createExec(char* name, int* argTypes, void** args)
 		i++;
 	}
 	memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE), argTypes+i, INT_SIZE);
-	i++;
 
+	int offset = FN_NAME_LEN+((i+1) * INT_SIZE);
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE),
-			   *(args+j), PTR_SIZE);
+		int size = getArgSize(argTypes[j]);
+		for (int x = 0; x < getArgLen(argTypes[j]); x++){
+			memcpy(msg_data+offset, (*(args + j) + (x * size)), size);
+			offset += size;
+		}
 	}
 
-	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*PTR_SIZE;
+	msg.length = offset;
 	msg.type = EXECUTE;
 	memcpy(msg.data, msg_data, msg.length);
+
 	return msg;
 }
 
@@ -131,15 +137,19 @@ struct message createExecSuc(char* name, int* argTypes, void** args)
 		i++;
 	}
 	memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE), argTypes+i, INT_SIZE);
-	i++;
 
+
+	int offset = FN_NAME_LEN+((i+1) * INT_SIZE);
 	for (int j = 0; j < i; j++)
 	{
-		memcpy(msg_data+FN_NAME_LEN+(i*INT_SIZE)+(j*PTR_SIZE),
-			   *(args+j), PTR_SIZE);
+		int size = getArgSize(argTypes[j]);
+		for (int x = 0; x < getArgLen(argTypes[j]); x++){
+			memcpy(msg_data+offset, (*(args + j) + (x * size)), size);
+			offset += size;
+		}
 	}
 
-	msg.length = FN_NAME_LEN + i*INT_SIZE+ (i-1)*PTR_SIZE;
+	msg.length = offset;
 	msg.type = EXECUTE_SUCCESS;
 	memcpy(msg.data, msg_data, msg.length);
 	return msg;

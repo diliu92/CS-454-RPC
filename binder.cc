@@ -13,68 +13,47 @@
 #include <map>
 #include "rpc.h"
 #include "message.h"
+#include "helper.h"
 
 using namespace std;
 
 pthread_t thread;
 pthread_mutex_t mutexLock;
 
-typedef struct functionInfo{
-	char *fnName;
-	int *argTypes;
-	int numArgTypes;
-}functionInfo;
-
-typedef struct ServerInfo{
-	char *hostname;
-	int port;
-}ServerInfo;
-
 deque <int> server_connections;
-map<functionInfo *, deque<ServerInfo *> *> fn2server;
-
+map<functionInfo, deque<ServerInfo *> *> fn2server;
 
 void register_handler(int socket_fd, int len, char* msg){
-	char hostname[15];
-	int port;
-	char fn_name[64];
-	int num_arg_types = (len - 15 - 4 - 64) / 4;
-	int argTypes[num_arg_types];
+	ServerInfo *svrInfo = new ServerInfo();
+	memcpy(svrInfo->hostname, msg, 15);
+	memcpy(&(svrInfo->port), msg+15, 4);
 
-	memcpy(hostname, msg, 15);
-	memcpy(&port, msg+15, 4);
-	memcpy(fn_name, msg+19, 64);
-	for(int i = 0; i < num_arg_types; i++){
-		memcpy(argTypes+i, msg+83+i*4, 4);
+	functionInfo fnInfo;
+	memcpy(fnInfo.fnName, msg+19, 64);
+	fnInfo.numArgTypes = (len - 15 - 4 - 64) / 4;
+	fnInfo.argTypes = new int[fnInfo.numArgTypes];
+	for(int i = 0; i < fnInfo.numArgTypes; i++){
+		memcpy(fnInfo.argTypes+i, msg+83+i*4, 4);
 	}
 
-	cout << "- hostname: " << hostname << "; port: " << port << "; fn_name: " << fn_name << "; num_arg_types: " << num_arg_types << endl;
-	functionInfo *fnInfo = new functionInfo();
-	fnInfo->fnName = fn_name;
-	fnInfo->argTypes = argTypes;
-	fnInfo->numArgTypes = num_arg_types;
-
-	ServerInfo *srvInfo = new ServerInfo();
-	srvInfo->hostname = hostname;
-	srvInfo->port = port;
-
 	pthread_mutex_lock(&mutexLock);
-
 	if (fn2server.find(fnInfo) == fn2server.end()){	//the fn has never been registered before
-		cout << "- never registered before" << endl;
 		fn2server[fnInfo] = new deque<ServerInfo *>();
 	}
 
 	deque <ServerInfo *> *servers = fn2server[fnInfo];
+
 	for(deque<ServerInfo *>::iterator it = servers->begin();
 		it != servers->end();
-		++it){
+		it++){
 		ServerInfo *cur = *it;
-		if (cur->hostname == srvInfo->hostname && cur->port == srvInfo->port){
-			servers->erase(it);
+		if ((strcmp(cur->hostname, svrInfo->hostname) == 0) && 
+			cur->port == svrInfo->port){
+			servers->erase(it);		
+			break;
 		}
 	}
-	servers->push_back(srvInfo);
+	servers->push_back(svrInfo);
 
 	pthread_mutex_unlock(&mutexLock);
 
@@ -87,23 +66,15 @@ void register_handler(int socket_fd, int len, char* msg){
 }
 
 void loc_request_handler(int socket_fd, int len, char* msg){
+	functionInfo fnInfo;
+	memcpy(fnInfo.fnName, msg, 64);
+	fnInfo.numArgTypes = (len - 64) / 4;
+	fnInfo.argTypes = new int[fnInfo.numArgTypes];
 
-	cout << "loc_request_handler: " << endl;
-	char fn_name[64];
-	int num_arg_types = (len - 64) / 4;
-	int argTypes[num_arg_types];
-
-	memcpy(fn_name, msg, 64);
-	for(int i = 0; i < num_arg_types; i++){
-		memcpy(argTypes+i, msg+64+i*4, 4);
+	for(int i = 0; i < fnInfo.numArgTypes; i++){
+		memcpy(fnInfo.argTypes+i, msg+64+i*4, 4);
 	}
 
-	cout << "- fn_name: " << fn_name << "; num_arg_types: " << num_arg_types << endl;
-
-	functionInfo *fnInfo = new functionInfo();
-	fnInfo->fnName = fn_name;
-	fnInfo->argTypes = argTypes;
-	fnInfo->numArgTypes = num_arg_types;
 
 	bool success = false;
 	pthread_mutex_lock(&mutexLock);
@@ -120,7 +91,6 @@ void loc_request_handler(int socket_fd, int len, char* msg){
 	pthread_mutex_unlock(&mutexLock);
 
 	if (success){
-		cout << "- hostname: " << svrInfo->hostname << "; port: " << svrInfo->port << endl;
 		struct message reply = createLocSuc(svrInfo->hostname, svrInfo->port);
 		send(socket_fd, &reply.length, sizeof(int), 0);
 		send(socket_fd, &reply.type, sizeof(int), 0);
@@ -136,12 +106,13 @@ void loc_request_handler(int socket_fd, int len, char* msg){
 	return;
 }
 
-void terminate_server_handler(){
+void terminate_server_handler(int len, int type){
 	cout << "terminate_server_handler" << endl;
 	while(!server_connections.empty()){
 		int fd = server_connections.front();
 		server_connections.pop_front();
-		close(fd);
+		send(fd, &len, sizeof(int), 0);
+		send(fd, &type, sizeof(int), 0);
 	}
 	cout << "all connections closed" << endl;
 	return;
@@ -155,20 +126,25 @@ void *handler(void *arguments){
 		//get length
 		if (recv(socket_fd, &len, sizeof(int), 0) <= 0){
 			close(socket_fd);
+			//cout << "- len: " << len << endl;
 			break;
 		}
 
 		//get type
 		if (recv(socket_fd, &type, sizeof(int), 0) <= 0){
 			close(socket_fd);
+			//cout << "- type: " << type << endl;
 			break;
 		}
 
 		//get message
 		char msg[len];
-		if (recv(socket_fd, msg, len, 0) <= 0){
-			close(socket_fd);
-			break;
+		if(len > 0){
+			if (recv(socket_fd, msg, len, 0) <= 0){
+				close(socket_fd);
+				//cout << "- msg: " << msg << endl;
+				break;
+			}
 		}
 
 		cout << "- type: " << type << endl;
@@ -176,6 +152,7 @@ void *handler(void *arguments){
 		switch(type){
 			case INITIALIZE:
 				server_connections.push_back(socket_fd);
+				cout << "initialization complete" << endl;
 				break;
 			case REGISTER:
 				register_handler(socket_fd, len, msg);
@@ -184,7 +161,7 @@ void *handler(void *arguments){
 				loc_request_handler(socket_fd, len, msg);
 				break;
 			case TERMINATE:
-				terminate_server_handler();
+				terminate_server_handler(len, type);
 				break;
 		}
 	}

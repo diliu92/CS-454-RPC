@@ -25,6 +25,11 @@ using namespace std;
 #define FN_NAME_LEN 	64
 #define INT_SIZE 		sizeof(int)
 #define PTR_SIZE 		sizeof(void *)
+#define CHAR_SIZE 		sizeof(char)
+#define SHORT_SIZE 		sizeof(short)
+#define LONG_SIZE 		sizeof(long)
+#define DOUBLE_SIZE 	sizeof(double)
+#define FLOAT_SIZE 		sizeof(float)
 
 struct message {
 	int length;		// message length
