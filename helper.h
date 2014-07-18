@@ -5,17 +5,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "message.h"
+#include "helper.h"
+#include "rpc.h"
 
 using namespace std;
 
 typedef struct functionInfo{
-	char fnName[64];
+	char fnName[FN_NAME_LEN];
 	int *argTypes;
 	int numArgTypes;
 }functionInfo;
 
 typedef struct ServerInfo{
-	char hostname[15];
+	char hostname[HOST_LEN];
 	int port;
 }ServerInfo;
 

@@ -183,30 +183,3 @@ int getType(message msg){
 char* getData(message msg){
 	return msg.data;
 }
-
-
-// char* getTCPData(message msg)
-// {
-// 	int msg_len = msg.length;
-// 	int msg_type = msg.type;
-
-// 	char return_arr[MAX_DATA_LEN];
-// 	memcpy(return_arr, &msg_len, INT_SIZE);
-// 	memcpy(return_arr+INT_SIZE, &msg_type, INT_SIZE);
-// 	memcpy(return_arr+(2*INT_SIZE), msg.data, msg_len);
-// 	return return_arr;
-// }
-
-// struct message parseTCPData(char* msgdata)
-// {
-// 	struct message msg;
-// 	int msg_len, msg_type;
-// 	char msg_data[MAX_DATA_LEN];
-// 	memcpy(&msg_len, msgdata, INT_SIZE);
-// 	memcpy(&msg_type, msgdata+INT_SIZE, INT_SIZE);
-// 	memcpy(msg_data, msgdata+2*INT_SIZE, msg_len);
-// 	msg.length = msg_len;
-// 	msg.type = msg_type;
-// 	memcpy(msg.data, msg_data, msg.length);
-// 	return msg;
-// }

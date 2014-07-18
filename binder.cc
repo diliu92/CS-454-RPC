@@ -25,15 +25,16 @@ map<functionInfo, deque<ServerInfo *> *> fn2server;
 
 void register_handler(int socket_fd, int len, char* msg){
 	ServerInfo *svrInfo = new ServerInfo();
-	memcpy(svrInfo->hostname, msg, 15);
-	memcpy(&(svrInfo->port), msg+15, 4);
+	memcpy(svrInfo->hostname, msg, HOST_LEN);
+	memcpy(&(svrInfo->port), msg+HOST_LEN, INT_SIZE);
 
 	functionInfo fnInfo;
-	memcpy(fnInfo.fnName, msg+19, 64);
-	fnInfo.numArgTypes = (len - 15 - 4 - 64) / 4;
+	memcpy(fnInfo.fnName, msg+HOST_LEN+INT_SIZE, FN_NAME_LEN);
+	int offset = HOST_LEN + INT_SIZE + FN_NAME_LEN;
+	fnInfo.numArgTypes = (len - offset) / INT_SIZE;
 	fnInfo.argTypes = new int[fnInfo.numArgTypes];
 	for(int i = 0; i < fnInfo.numArgTypes; i++){
-		memcpy(fnInfo.argTypes+i, msg+83+i*4, 4);
+		memcpy(fnInfo.argTypes+i, msg+offset+i*INT_SIZE, INT_SIZE);
 	}
 
 	pthread_mutex_lock(&mutexLock);
@@ -67,12 +68,12 @@ void register_handler(int socket_fd, int len, char* msg){
 
 void loc_request_handler(int socket_fd, int len, char* msg){
 	functionInfo fnInfo;
-	memcpy(fnInfo.fnName, msg, 64);
-	fnInfo.numArgTypes = (len - 64) / 4;
+	memcpy(fnInfo.fnName, msg, FN_NAME_LEN);
+	fnInfo.numArgTypes = (len - FN_NAME_LEN) / 4;
 	fnInfo.argTypes = new int[fnInfo.numArgTypes];
 
 	for(int i = 0; i < fnInfo.numArgTypes; i++){
-		memcpy(fnInfo.argTypes+i, msg+64+i*4, 4);
+		memcpy(fnInfo.argTypes+i, msg+FN_NAME_LEN+i*4, 4);
 	}
 
 
@@ -185,8 +186,8 @@ int main()
 		return -1;
 	}
 
-	char hostname[15];
-	gethostname(hostname,15);
+	char hostname[HOST_LEN];
+	gethostname(hostname,HOST_LEN);
 	getsockname(binder_socket_fd, (struct sockaddr *)&binder_addr, &binder_addr_len);
 	int binder_port = ntohs(binder_addr.sin_port);
 	// Print out binder address and port

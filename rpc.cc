@@ -24,9 +24,8 @@ using namespace std;
 #define HOSTNAME_GET    -4
 #define CON_ERR  		-5
 #define ACPT_ERR  		-6
-#define TERM_ERR 		-7
-#define NO_FUNCTION		-8
-#define THREAD_CREATE	-9
+#define NO_FUNCTION		-7
+#define THREAD_CREATE	-8
 
 map<functionInfo, skeleton> svrfns;
 int acpt_soc, reg_soc;
@@ -68,10 +67,10 @@ void *exec_fn(void *conn){
 		int offset = FN_NAME_LEN;
 		int i = 0;
 		while (*((int *)(rcv_data + offset)) != 0){
-			offset = offset + 4;
+			offset = offset + INT_SIZE;
 			i++;
 		}
-		offset = offset + 4;
+		offset = offset + INT_SIZE;
 
 		char **args;
 
@@ -187,8 +186,8 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	memset(&server_addr, '0', sizeof(server_addr));
 	socklen_t addr_len = sizeof(sockaddr_in);
 
-	char host[15];
-	gethostname(host,15);
+	char host[HOST_LEN];
+	gethostname(host,HOST_LEN);
 	getsockname(acpt_soc, (sockaddr *)&server_addr, &addr_len);
 	int port = ntohs(server_addr.sin_port);
 
@@ -197,7 +196,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	int send_type = msg.type;
 
 	functionInfo fnInfo;
-	memcpy(fnInfo.fnName, name, 64);
+	memcpy(fnInfo.fnName, name, FN_NAME_LEN);
 	int i =0;
 	while (*(argTypes+i)!=0){i++;}
 	fnInfo.argTypes = new int[i+1];
@@ -342,10 +341,10 @@ int rpcCall(char* name, int* argTypes, void** args)
 			int offset = FN_NAME_LEN;
 			int i = 0;
 			while (*((int *)(rcv_data2 + offset)) != 0){
-				offset = offset + 4;
+				offset = offset + INT_SIZE;
 				i++;
 			}
-			offset = offset + 4;
+			offset = offset + INT_SIZE;
 
 			for (int x = 0; x < i; x++){
 				int argType = argTypes[x];
