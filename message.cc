@@ -15,7 +15,6 @@ struct message createReg(char *host, int port, char *name, int *argTypes)
 	int l = HOST_LEN+INT_SIZE+FN_NAME_LEN;
 	memcpy(msg_data, host, HOST_LEN);
 	memcpy(msg_data+HOST_LEN, &port, INT_SIZE);
-	cout << "createReg: " << *((int *)(msg_data+HOST_LEN)) << endl;
 	memcpy(msg_data+HOST_LEN+INT_SIZE, name, FN_NAME_LEN);
 
 	int i =0;

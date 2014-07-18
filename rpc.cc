@@ -26,10 +26,24 @@ using namespace std;
 #define ACPT_ERR  		-6
 #define TERM_ERR 		-7
 #define NO_FUNCTION		-8
+#define THREAD_CREATE	-9
 
 map<functionInfo, skeleton> svrfns;
 int acpt_soc, reg_soc;
 bool connected = false;
+bool termination = false;
+
+void *wait_term(void *reg_soc)
+{
+	int soc_fd = *((int *)reg_soc);
+	int rcv_len, rcv_type;
+	recv(soc_fd, &rcv_len, INT_SIZE, 0);
+	recv(soc_fd, &rcv_type, INT_SIZE, 0);
+	if (rcv_type == TERMINATE)
+	{
+		exit(0);	
+	}
+}
 
 void *exec_fn(void *conn){
 	int soc_fd = *((int *)conn);
@@ -51,7 +65,6 @@ void *exec_fn(void *conn){
 		memcpy(name, rcv_data, FN_NAME_LEN);
 		int *argTypes = (int *)(rcv_data + FN_NAME_LEN);
 
-		cout << "name : " << name << endl;
 		int offset = FN_NAME_LEN;
 		int i = 0;
 		while (*((int *)(rcv_data + offset)) != 0){
@@ -123,7 +136,7 @@ int rpcInit()
 	if ((reg_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 ||
 		(acpt_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 )
 	{
-		cout << "Unable to create socket" << endl;
+		cerr << "Unable to create socket" << endl;
 		return SOC_CREATE;
 	}
 
@@ -136,7 +149,7 @@ int rpcInit()
 
 	if ((binder = gethostbyname(mach_name)) == NULL)
 	{
-		cout << "Invalid host provided" << endl;
+		cerr << "Invalid host provided" << endl;
 		return HOSTNAME_GET;
 	}
 	binder_addr.sin_family = AF_INET;
@@ -149,13 +162,13 @@ int rpcInit()
 
 	if (bind(acpt_soc, (sockaddr *)&server_addr, addr_len) == -1)
 	{
-		cout << "Unable to bind to accept socket" << endl;
+		cerr << "Unable to bind to accept socket" << endl;
 		return BIND_ERR;
 	}
-	cout << server_addr.sin_port << endl;
+
 	if (connect(reg_soc, (sockaddr *)&binder_addr, addr_len) == -1)
 	{
-		cout << "Unable to connect to binder" << endl;
+		cerr << "Unable to connect to binder" << endl;
 		return CON_ERR;
 	}
 
@@ -212,7 +225,7 @@ int rpcRegister(char* name, int* argTypes, skeleton f)
 	}
 	else
 	{
-		cout << "Unable to connected to binder" << endl;
+		cerr << "Unable to connected to binder" << endl;
 		return CON_ERR;
 	}
 }
@@ -229,7 +242,7 @@ int rpcCall(char* name, int* argTypes, void** args)
 
 	if ((conn_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 )
 	{
-		cout << "Unable to create socket" << endl;
+		cerr << "Unable to create socket" << endl;
 		return SOC_CREATE;
 	}
 	// fcntl(conn_soc, F_SETFL, O_NONBLOCK);
@@ -239,7 +252,7 @@ int rpcCall(char* name, int* argTypes, void** args)
 
 	if ((binder = gethostbyname(binder_machine)) == NULL)
 	{
-		cout << "Invalid host provided" << endl;
+		cerr << "Invalid host provided" << endl;
 		return HOSTNAME_GET;
 	}
 
@@ -249,7 +262,7 @@ int rpcCall(char* name, int* argTypes, void** args)
 
 	if (connect(conn_soc, (sockaddr *)&binder_addr, addr_len) == -1)
 	{
-		cout << "Unable to connect to binder" << endl;
+		cerr << "Unable to connect to binder" << endl;
 		return CON_ERR;
 	}
 
@@ -279,13 +292,11 @@ int rpcCall(char* name, int* argTypes, void** args)
 		char server_host[HOST_LEN];
 		int server_port;
 		memcpy(server_host, data, HOST_LEN);
-		// cout << "sh " << server_host << endl;
 		memcpy(&server_port, data+HOST_LEN, INT_SIZE);
-		// cout << "sp " << server_port << endl;
 
 		if ((server = gethostbyname(server_host)) == NULL)
 		{
-			cout << "Invalid host provided" << endl;
+			cerr << "Invalid host provided" << endl;
 			return HOSTNAME_GET;
 		}
 
@@ -295,13 +306,13 @@ int rpcCall(char* name, int* argTypes, void** args)
 
 		if ((serv_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 )
 			{
-				cout << "Unable to create server socket" << endl;
+				cerr << "Unable to create server socket" << endl;
 				return SOC_CREATE;
 			}
 
 		if (connect(serv_soc, (sockaddr *)&server_addr, sizeof(server_addr)) == -1)
 		{
-			cout << "Unable to connect to server" << endl;
+			cerr << "Unable to connect to server" << endl;
 			return CON_ERR;
 		}
 
@@ -350,42 +361,36 @@ int rpcCall(char* name, int* argTypes, void** args)
 
 int rpcExecute()
 {
-	cout << "in rpcExecute" << endl;
-
 	struct sockaddr_in client_addr;
 	socklen_t addr_len = sizeof(sockaddr_in);
 	int conn;
-	pthread_t thread[1];
+	pthread_t thread;
 
 	if (listen(acpt_soc, 5) == -1)
 	{
-		cout << "Unable to listen" << endl;
+		cerr << "Unable to listen" << endl;
 		return LISTEN_ERR;
 	}
-	cout << "listening!!" << endl;
 
-	while(true)
+	if (pthread_create(&thread, NULL, wait_term, (void *)&reg_soc) != 0)
+	{
+		cerr << "Error when creating thread" << endl;
+		return THREAD_CREATE;
+	}
+
+	while(!termination)
 	{
 		if ((conn = accept(acpt_soc, (sockaddr *)&client_addr, &addr_len)) == -1)
 		{
-			cout << "Fail to connect with client" << endl;
+			cerr << "Fail to connect with client" << endl;
 			return ACPT_ERR;
 		}
-		cout << "accpeted connection!!" << endl;
-		if (pthread_create(&thread[0], NULL, exec_fn, (void *)&conn) != 0)
+		if (pthread_create(&thread, NULL, exec_fn, (void *)&conn) != 0)
 		{
-			cout << "Error when create thread" << endl;
-			return -1;
+			cerr << "Error when creating thread" << endl;
+			return THREAD_CREATE;
 		}
 	} 
-	int rcv_len, rcv_type;
-	recv(reg_soc, &rcv_len, INT_SIZE, 0);
-	recv(reg_soc, &rcv_type, INT_SIZE, 0);
-	if (rcv_type == TERMINATE)
-	{
-		close(reg_soc);
-		close(acpt_soc);
-	}
 	return 0;
 }
 
@@ -396,9 +401,9 @@ int rpcTerminate()
 	socklen_t addr_len = sizeof(sockaddr_in);
 	int conn_soc;
 
-	if (conn_soc = socket(AF_INET, SOCK_STREAM, 0) == -1 )
+	if ((conn_soc = socket(AF_INET, SOCK_STREAM, 0)) == -1 )
 	{
-		cout << "Unable to create socket" << endl;
+		cerr << "Unable to create socket" << endl;
 		return -1;
 	}
 
@@ -406,7 +411,7 @@ int rpcTerminate()
 	int binder_port = atoi(getenv("BINDER_PORT"));
 	if ((binder = gethostbyname(mach_name)) == NULL)
 	{
-		cout << "Invalid host provided" << endl;
+		cerr << "Invalid host provided" << endl;
 		return HOSTNAME_GET;
 	}
 
@@ -416,7 +421,7 @@ int rpcTerminate()
 
 	if (connect(conn_soc, (sockaddr *)&binder_addr, addr_len) == -1)
 	{
-		cout << "Unable to connect to binder" << endl;
+		cerr << "Unable to connect to binder" << endl;
 		return CON_ERR;
 	}
 

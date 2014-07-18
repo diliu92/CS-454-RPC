@@ -107,15 +107,13 @@ void loc_request_handler(int socket_fd, int len, char* msg){
 }
 
 void terminate_server_handler(int len, int type){
-	cout << "terminate_server_handler" << endl;
 	while(!server_connections.empty()){
 		int fd = server_connections.front();
 		server_connections.pop_front();
 		send(fd, &len, sizeof(int), 0);
 		send(fd, &type, sizeof(int), 0);
 	}
-	cout << "all connections closed" << endl;
-	return;
+	exit(0);
 }
 
 void *handler(void *arguments){
@@ -126,14 +124,12 @@ void *handler(void *arguments){
 		//get length
 		if (recv(socket_fd, &len, sizeof(int), 0) <= 0){
 			close(socket_fd);
-			//cout << "- len: " << len << endl;
 			break;
 		}
 
 		//get type
 		if (recv(socket_fd, &type, sizeof(int), 0) <= 0){
 			close(socket_fd);
-			//cout << "- type: " << type << endl;
 			break;
 		}
 
@@ -142,17 +138,13 @@ void *handler(void *arguments){
 		if(len > 0){
 			if (recv(socket_fd, msg, len, 0) <= 0){
 				close(socket_fd);
-				//cout << "- msg: " << msg << endl;
 				break;
 			}
 		}
 
-		cout << "- type: " << type << endl;
-
 		switch(type){
 			case INITIALIZE:
 				server_connections.push_back(socket_fd);
-				cout << "initialization complete" << endl;
 				break;
 			case REGISTER:
 				register_handler(socket_fd, len, msg);
@@ -165,7 +157,6 @@ void *handler(void *arguments){
 				break;
 		}
 	}
-	cout << "thread terminating..." << endl;
 }
 
 int main()
@@ -215,7 +206,6 @@ int main()
 			exit(0);
 		}
 
-		cout << "new connection" << endl;
 		if (pthread_create(&thread, NULL, handler, (void *) &new_socket_fd)){
 			cerr << "Cannot create new thread" << endl;
 			exit(0);
