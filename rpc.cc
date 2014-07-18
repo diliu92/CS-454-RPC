@@ -24,9 +24,8 @@ using namespace std;
 #define HOSTNAME_GET    -4
 #define CON_ERR  		-5
 #define ACPT_ERR  		-6
-#define TERM_ERR 		-7
-#define NO_FUNCTION		-8
-#define THREAD_CREATE	-9
+#define NO_FUNCTION 	-7
+#define THREAD_CREATE	-8
 
 map<functionInfo, skeleton> svrfns;
 int acpt_soc, reg_soc;
